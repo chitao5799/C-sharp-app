@@ -1,0 +1,10 @@
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\bin\Debug\CoCarroApp.exe.config
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\bin\Debug\CoCarroApp.exe
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\bin\Debug\CoCarroApp.pdb
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.csprojAssemblyReference.cache
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.Form1.resources
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.Properties.Resources.resources
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.csproj.GenerateResource.cache
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.csproj.CoreCompileInputs.cache
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.exe
+C:\taiLieu\CoCarroCsharpForm\CoCarroApp\CoCarroApp\obj\Debug\CoCarroApp.pdb
