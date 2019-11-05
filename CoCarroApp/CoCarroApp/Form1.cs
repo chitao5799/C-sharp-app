@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -14,11 +15,13 @@ namespace CoCarroApp
     {
         #region properties
         ChessBoardManager chessboard;
+        ShocketManager socket;
         #endregion
         public Form1()
         {
             InitializeComponent();
             chessboard = new ChessBoardManager(panelChessBoard,textBoxPlayerName,pictureBoxMask);
+            socket = new ShocketManager();
             //truyền các tên biến của các đối tượng trong design vào new ChessBoardManager thì khi các biến đối tượng của ChessBoardManager
             //thay đổi thì các giá trị của các biến design cũng thay đổi theo.
             chessboard.EndedGame += Chessboard_EndedGame;  //ứng dụng event
@@ -110,6 +113,56 @@ namespace CoCarroApp
         {
             if (MessageBox.Show("bạn có muốn thoát game", "Thông báo", MessageBoxButtons.OKCancel) != System.Windows.Forms.DialogResult.OK)
                 e.Cancel = true;
+        }
+
+        private void buttonLan_Click(object sender, EventArgs e)
+        {
+            socket.myIP = textBoxIPPlayer.Text;
+            if (!socket.ConnectServer())  //server
+            {
+                socket.CreateServer();
+                Thread threadListen = new Thread(() => {
+                    while (true)
+                    {
+                        Thread.Sleep(500);
+                        try
+                        {
+                            Listen();
+                            break;
+                        }
+                        catch { }
+                        
+                    }
+                    
+                });
+                threadListen.IsBackground = true;
+                threadListen.Start();
+                
+            }
+            else  //client
+            {
+                Thread threadListen = new Thread(() => {
+                     Listen();
+                 });
+                 threadListen.IsBackground = true;
+                 threadListen.Start();
+                socket.Send("thông tin từ client.");
+            }
+             
+        }
+
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            textBoxIPPlayer.Text = socket.GetLocalIPv4(System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211);
+            if (string.IsNullOrEmpty(textBoxIPPlayer.Text))
+                textBoxIPPlayer.Text = socket.GetLocalIPv4(System.Net.NetworkInformation.NetworkInterfaceType.Ethernet);
+          
+           // MessageBox.Show("ipla:" + textBoxIPPlayer.Text);
+        }
+        private void Listen()
+        {
+            string data = (string)socket.Receive();
+            MessageBox.Show(data);
         }
     }
 }
