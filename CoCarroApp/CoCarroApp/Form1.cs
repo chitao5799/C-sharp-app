@@ -31,14 +31,15 @@ namespace CoCarroApp
 
             timerCountDown.Interval = constant.count_down_interval;
 
-            chessboard.DrawChessBoard();
-            
+            //chessboard.DrawChessBoard();
+            newGame();
             //timerCountDown.Start();
         }
         void endgame()
         {
             timerCountDown.Stop();
             panelChessBoard.Enabled = false;
+            undoToolStripMenuItem.Enabled = false;//kết thúc game rồi thì nút undo trong menu ko bấm đc nữa
             MessageBox.Show("kết thúc game.");
         }
 
@@ -73,6 +74,42 @@ namespace CoCarroApp
                
                 endgame();
             }
+        }
+        void newGame()
+        {
+            progressBarCountDown.Value = 0;
+            timerCountDown.Stop();
+            undoToolStripMenuItem.Enabled = true;
+            chessboard.DrawChessBoard();
+           
+        }
+        void undo()
+        {
+            chessboard.Undo();
+        }
+        void quit()
+        {
+                 Application.Exit();
+        }
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            newGame();
+        }
+
+        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            undo();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            quit();
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (MessageBox.Show("bạn có muốn thoát game", "Thông báo", MessageBoxButtons.OKCancel) != System.Windows.Forms.DialogResult.OK)
+                e.Cancel = true;
         }
     }
 }

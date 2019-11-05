@@ -23,6 +23,7 @@ namespace CoCarroApp
         public TextBox NamePlayer { get => namePlayer; set => namePlayer = value; }
         public PictureBox MarkPlayer { get => markPlayer; set => markPlayer = value; }
         public List<List<Button>> Matric { get => matric; set => matric = value; }
+        public Stack<PlayInfo> PlayTimeLine { get => playTimeLine; set => playTimeLine = value; }
 
         private List<player> players;
         private int IndexCurrentPlayer;
@@ -55,6 +56,7 @@ namespace CoCarroApp
                 endedGame -= value;
             }
         }
+        private Stack<PlayInfo> playTimeLine;
         #endregion
 
         #region initialize
@@ -68,9 +70,8 @@ namespace CoCarroApp
                 new player("xyz",Image.FromFile(Application.StartupPath + "\\Resources\\x.png")),
                 new player("obc",Image.FromFile(Application.StartupPath + "\\Resources\\o.png"))
             };
-            IndexCurrentPlayer1 = 0;
-            changePlayer();
 
+            
         }
         #endregion
 
@@ -78,6 +79,10 @@ namespace CoCarroApp
         public void DrawChessBoard()
         {
             chessBoard.Enabled = true;
+            ChessBoard.Controls.Clear();
+            PlayTimeLine = new Stack<PlayInfo>();//khởi tạo ơ đây để khi new game thì stack sẽ khởi tạo lại
+            IndexCurrentPlayer1 = 0;  //IndexCurrentPlayer1 là method khởi tạo của chỉ số người chơi.
+            changePlayer();
             //MessageBox.Show("đã vẽ bàn cờ");
             //Button bt1 = new Button();
             //bt1.Text = "1";
@@ -124,6 +129,8 @@ namespace CoCarroApp
             if (btn.BackgroundImage != null)
                 return;
             changeMark(btn);
+            PlayTimeLine.Push(new PlayInfo( getChessPoint(btn),IndexCurrentPlayer));
+            IndexCurrentPlayer1 = IndexCurrentPlayer1 == 1 ? 0 : 1;
             changePlayer();
             if (playerMarked != null)
                 playerMarked(this, new EventArgs()); //khởi tạo event
@@ -138,6 +145,24 @@ namespace CoCarroApp
             }
            
 
+        }
+        public bool Undo()
+        {
+            if (PlayTimeLine.Count <= 0)
+                return false;
+            PlayInfo oldPoint = PlayTimeLine.Pop();  //pop lấy ra luôn khỏi stack
+            Button oldButt = Matric[oldPoint.Point.Y][oldPoint.Point.X];
+            oldButt.BackgroundImage = null;
+            //IndexCurrentPlayer1 = PlayTimeLine.Peek().IndexCurrentPlayer==1?0:1; //peek lấy ra xem nhưng trong stack vẫn còn
+            if (PlayTimeLine.Count <= 0)
+                IndexCurrentPlayer1 = 0;
+            else
+            {
+                IndexCurrentPlayer1 = PlayTimeLine.Peek().IndexCurrentPlayer == 1 ? 0 : 1;
+            }
+
+            changePlayer();
+            return true;
         }
 
         public void EndGame()
@@ -275,7 +300,7 @@ namespace CoCarroApp
         public void changeMark(Button btn)
         {
             btn.BackgroundImage = Players[IndexCurrentPlayer1].Mark;
-            IndexCurrentPlayer1 = IndexCurrentPlayer1 == 1 ? 0 : 1;
+            
         }
         public void changePlayer()
         {
