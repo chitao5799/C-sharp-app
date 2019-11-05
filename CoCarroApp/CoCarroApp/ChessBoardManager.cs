@@ -165,6 +165,15 @@ namespace CoCarroApp
         {
             if (PlayTimeLine.Count <= 0)
                 return false;
+            bool undo1 = undo1Step();
+            bool undo2=undo1Step();
+            IndexCurrentPlayer1 = PlayTimeLine.Peek().IndexCurrentPlayer == 1 ? 0 : 1;
+            return undo1 && undo2;//undo 2 lần vì 2 người chơi.
+        }
+        private bool undo1Step()
+        {
+            if (PlayTimeLine.Count <= 0)
+                return false;
             PlayInfo oldPoint = PlayTimeLine.Pop();  //pop lấy ra luôn khỏi stack
             Button oldButt = Matric[oldPoint.Point.Y][oldPoint.Point.X];
             oldButt.BackgroundImage = null;
@@ -173,13 +182,12 @@ namespace CoCarroApp
                 IndexCurrentPlayer1 = 0;
             else
             {
-                IndexCurrentPlayer1 = PlayTimeLine.Peek().IndexCurrentPlayer == 1 ? 0 : 1;
+                
             }
 
             changePlayer();
             return true;
         }
-
         public void EndGame()
         {
             //MessageBox.Show("kết thúc game.");

@@ -45,7 +45,7 @@ namespace CoCarroApp
             timerCountDown.Stop();
             panelChessBoard.Enabled = false;
             undoToolStripMenuItem.Enabled = false;//kết thúc game rồi thì nút undo trong menu ko bấm đc nữa
-            MessageBox.Show("kết thúc game.");
+            //MessageBox.Show("kết thúc game.");
         }
 
         private void Chessboard_playerMarked(object sender, ButtonClickEvent e)//sender là đối tượng gây ra sự kiện
@@ -57,13 +57,14 @@ namespace CoCarroApp
             //Console.WriteLine(sender.GetType().ToString());//để xem đối tượng nào được truyền vào.
 
             socket.Send(new SocketData((int)SocketCommand.SEND_POINT,"",e.ClickedPoint));
-
+            undoToolStripMenuItem.Enabled = false;
             Listen();
         }
 
         private void Chessboard_EndedGame(object sender, EventArgs e)
         {
             //MessageBox.Show("chạy vào hàm chessboard-endedgame.");
+            socket.Send(new SocketData((int)SocketCommand.END_GAME, "", new Point()));
             endgame();
         }
 
@@ -79,7 +80,7 @@ namespace CoCarroApp
 
             if (progressBarCountDown.Value >= progressBarCountDown.Maximum)
             {
-               
+                socket.Send(new SocketData((int)SocketCommand.TIME_OUT, "", new Point()));
                 endgame();
             }
         }
@@ -94,6 +95,7 @@ namespace CoCarroApp
         void undo()
         {
             chessboard.Undo();
+            progressBarCountDown.Value = 0;
         }
         void quit()
         {
@@ -101,11 +103,14 @@ namespace CoCarroApp
         }
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            socket.Send(new SocketData((int)SocketCommand.NEW_GAME, "", new Point()));
             newGame();
+            panelChessBoard.Enabled = true;//khi kết nối mạng lan, bên nào new game thì đc đánh.
         }
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            socket.Send(new SocketData((int)SocketCommand.UNDO, "", new Point()));
             undo();
         }
 
@@ -117,7 +122,19 @@ namespace CoCarroApp
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (MessageBox.Show("bạn có muốn thoát game", "Thông báo", MessageBoxButtons.OKCancel) != System.Windows.Forms.DialogResult.OK)
-                e.Cancel = true;
+            { e.Cancel = true; }
+            else
+            {
+                try
+                {
+                    socket.Send(new SocketData((int)SocketCommand.QUIT, "", new Point()));
+                }
+                catch
+                {
+
+                }
+                
+            }
         }
 
         private void buttonLan_Click(object sender, EventArgs e)
@@ -175,11 +192,20 @@ namespace CoCarroApp
                     MessageBox.Show(socketData.Message);
                     break;
                 case (int)SocketCommand.NEW_GAME:
-                    
+                    this.Invoke((MethodInvoker)(() => {
+                      newGame();
+                        panelChessBoard.Enabled = false;//tránh trường hợp new game cả 2 bên đều được đánh
+                    }));
                     break;
                 case (int)SocketCommand.QUIT:
+                    timerCountDown.Stop();
+                    MessageBox.Show("người chơi bên kia đã thoát.");
                     break;
                 case (int)SocketCommand.END_GAME:
+                    MessageBox.Show("người chơi bên kia đã thắng.");
+                    break;
+                case (int)SocketCommand.TIME_OUT:
+                    MessageBox.Show("hết giờ.");
                     break;
                 case (int)SocketCommand.SEND_POINT:
                     this.Invoke((MethodInvoker)(()=>{  //invoke thay đổi giao diện muốn chạy ngọt nên trong invoke.
@@ -188,10 +214,13 @@ namespace CoCarroApp
                         //lệnh trên lỗi cross-thread operation khi chạy các luồng khác nhau.sửa ở trên hàm tạo form1 là Control.CheckForIllegalCrossThreadCalls = false;
                         timerCountDown.Start(); //cái processbar nằm trong luồng khác nên mấy cái này đặt trong invoke
                         chessboard.OtherPlayerMark(socketData.Point);
+                        undoToolStripMenuItem.Enabled = true;
                     }));
                    
                     break;
                 case (int)SocketCommand.UNDO:
+                    undo();
+                    progressBarCountDown.Value = 0;
                     break;
             }
             Listen();
