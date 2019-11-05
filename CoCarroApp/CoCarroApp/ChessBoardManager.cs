@@ -30,9 +30,9 @@ namespace CoCarroApp
         private TextBox namePlayer;
         private PictureBox markPlayer;
         private List<List<Button>> matric;
-        private event EventHandler playerMarked;//playerMarked như kiểu biến hàm giống như delegate
+        private event EventHandler<ButtonClickEvent> playerMarked;//playerMarked như kiểu biến hàm giống như delegate
 
-        public event EventHandler PlayerMarked //PlayerMarked cái này như kiểu queue(lúc đầu là null)
+        public event EventHandler<ButtonClickEvent> PlayerMarked //PlayerMarked cái này như kiểu queue(lúc đầu là null)
         {
             add  //add như là set
             {
@@ -133,7 +133,7 @@ namespace CoCarroApp
             IndexCurrentPlayer1 = IndexCurrentPlayer1 == 1 ? 0 : 1;
             changePlayer();
             if (playerMarked != null)
-                playerMarked(this, new EventArgs()); //khởi tạo event
+                playerMarked(this, new ButtonClickEvent(getChessPoint(btn))); //khởi tạo event
             /*khi gọi PlayerMarked += Chessboard_playerMarked; bên file form1.cs thì playerMarked khác null và khi gọi
             playerMarked(this, new EventArgs()); tương ứng với button mới được click lần đầu thì phương 
             thức Chessboard_playerMarked bên form1.cs sẽ được gọi VÌ hàm tạo event này được đặt trong phương thức bt_click này*/
@@ -142,9 +142,24 @@ namespace CoCarroApp
             {
                 EndGame();
 
-            }
+            }         
+        }
+        public void OtherPlayerMark(Point point)
+        {
+            Button btn =Matric[point.Y][point.X];
+            if (btn.BackgroundImage != null)
+                return;
+           // chessBoard.Enabled = true;
+            changeMark(btn);
+            PlayTimeLine.Push(new PlayInfo(getChessPoint(btn), IndexCurrentPlayer));
+            IndexCurrentPlayer1 = IndexCurrentPlayer1 == 1 ? 0 : 1;
+            changePlayer();
            
+            if (isEndGame(btn))
+            {
+                EndGame();
 
+            }
         }
         public bool Undo()
         {
@@ -309,5 +324,15 @@ namespace CoCarroApp
         }
         #endregion
 
+    }
+    public class ButtonClickEvent : EventArgs
+    {
+        private Point clickedPoint;//lưu lại tọa độ vừa được click
+
+        public Point ClickedPoint { get => clickedPoint; set => clickedPoint = value; }
+        public ButtonClickEvent(Point point)
+        {
+            this.ClickedPoint = point;
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static CoCarroApp.SocketData;
 
 namespace CoCarroApp
 {
@@ -20,6 +21,7 @@ namespace CoCarroApp
         public Form1()
         {
             InitializeComponent();
+            Control.CheckForIllegalCrossThreadCalls = false; //ko check nếu phần mềm khác chiếm tài nguyên để dùng
             chessboard = new ChessBoardManager(panelChessBoard,textBoxPlayerName,pictureBoxMask);
             socket = new ShocketManager();
             //truyền các tên biến của các đối tượng trong design vào new ChessBoardManager thì khi các biến đối tượng của ChessBoardManager
@@ -46,14 +48,17 @@ namespace CoCarroApp
             MessageBox.Show("kết thúc game.");
         }
 
-        private void Chessboard_playerMarked(object sender, EventArgs e)//sender là đối tượng gây ra sự kiện
+        private void Chessboard_playerMarked(object sender, ButtonClickEvent e)//sender là đối tượng gây ra sự kiện
         {
            
             timerCountDown.Start();
+            panelChessBoard.Enabled = false;
             progressBarCountDown.Value = 0;
             //Console.WriteLine(sender.GetType().ToString());//để xem đối tượng nào được truyền vào.
-           
-            
+
+            socket.Send(new SocketData((int)SocketCommand.SEND_POINT,"",e.ClickedPoint));
+
+            Listen();
         }
 
         private void Chessboard_EndedGame(object sender, EventArgs e)
@@ -120,33 +125,17 @@ namespace CoCarroApp
             socket.myIP = textBoxIPPlayer.Text;
             if (!socket.ConnectServer())  //server
             {
+                socket.isServer = true;
+                panelChessBoard.Enabled = true;
                 socket.CreateServer();
-                Thread threadListen = new Thread(() => {
-                    while (true)
-                    {
-                        Thread.Sleep(500);
-                        try
-                        {
-                            Listen();
-                            break;
-                        }
-                        catch { }
-                        
-                    }
-                    
-                });
-                threadListen.IsBackground = true;
-                threadListen.Start();
-                
+
             }
             else  //client
             {
-                Thread threadListen = new Thread(() => {
-                     Listen();
-                 });
-                 threadListen.IsBackground = true;
-                 threadListen.Start();
-                socket.Send("thông tin từ client.");
+                socket.isServer = false;
+                panelChessBoard.Enabled = false;
+                Listen();
+          
             }
              
         }
@@ -161,8 +150,51 @@ namespace CoCarroApp
         }
         private void Listen()
         {
-            string data = (string)socket.Receive();
-            MessageBox.Show(data);
+           
+                Thread threadListen = new Thread(() => {
+                    try { 
+                        SocketData data = (SocketData)socket.Receive();
+                        ProcessData(data);
+                    }
+                    catch
+                    {
+
+                    }
+                });
+                threadListen.IsBackground = true;
+                threadListen.Start();
+           
+            
+           // MessageBox.Show(data);
+        }
+        private void ProcessData(SocketData socketData)
+        {
+            switch (socketData.Command)
+            {
+                case (int)SocketCommand.NOTIFY:
+                    MessageBox.Show(socketData.Message);
+                    break;
+                case (int)SocketCommand.NEW_GAME:
+                    
+                    break;
+                case (int)SocketCommand.QUIT:
+                    break;
+                case (int)SocketCommand.END_GAME:
+                    break;
+                case (int)SocketCommand.SEND_POINT:
+                    this.Invoke((MethodInvoker)(()=>{  //invoke thay đổi giao diện muốn chạy ngọt nên trong invoke.
+                        progressBarCountDown.Value = 0;
+                        panelChessBoard.Enabled = true; 
+                        //lệnh trên lỗi cross-thread operation khi chạy các luồng khác nhau.sửa ở trên hàm tạo form1 là Control.CheckForIllegalCrossThreadCalls = false;
+                        timerCountDown.Start(); //cái processbar nằm trong luồng khác nên mấy cái này đặt trong invoke
+                        chessboard.OtherPlayerMark(socketData.Point);
+                    }));
+                   
+                    break;
+                case (int)SocketCommand.UNDO:
+                    break;
+            }
+            Listen();
         }
     }
 }
